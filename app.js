@@ -44,7 +44,6 @@ const DEFAULT_MANDI_DIRECTORY = {
   ]
 };
 
-// Load persistent data or initialize
 let MANDI_DIRECTORY = loadPersistentData();
 
 function loadPersistentData() {
@@ -74,12 +73,14 @@ let currentSignalFilter = 'ALL';
 let currentLanguage = 'Telugu';
 let deferredInstallPrompt = null;
 let liveUpdateTimer = null;
+let isTickerPaused = false;
 
 // DOM Ready Initializer
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initStateChips();
   initTicker();
+  initTickerHoverEvents();
   renderRates();
   renderTrends();
   renderWhatsAppPreview();
@@ -88,6 +89,23 @@ document.addEventListener('DOMContentLoaded', () => {
   initPWAPrompt();
   startLivePriceSimulator();
 });
+
+// Guaranteed JavaScript Mouseenter & Mouseleave Listener
+function initTickerHoverEvents() {
+  const wrapper = document.querySelector('.ticker-wrapper');
+  if (wrapper) {
+    wrapper.addEventListener('mouseenter', () => {
+      isTickerPaused = true;
+      const content = document.getElementById('ticker-content');
+      if (content) content.style.animationPlayState = 'paused';
+    });
+    wrapper.addEventListener('mouseleave', () => {
+      isTickerPaused = false;
+      const content = document.getElementById('ticker-content');
+      if (content) content.style.animationPlayState = 'running';
+    });
+  }
+}
 
 // Real-Time Live Price Fluctuation Engine (Updates & Persists every 4 seconds)
 function startLivePriceSimulator() {
@@ -110,7 +128,7 @@ function startLivePriceSimulator() {
       });
     });
 
-    savePersistentData(); // Save to localStorage so refresh keeps latest prices
+    savePersistentData();
     initTicker();
     renderRates();
     renderTrends();
@@ -178,9 +196,11 @@ function initStateChips() {
   });
 }
 
-// Ticker Bar
+// Ticker Bar with State Preservation
 function initTicker() {
   const tickerBox = document.getElementById('ticker-content');
+  if (!tickerBox) return;
+
   let allItems = [];
   Object.values(MANDI_DIRECTORY).forEach(list => allItems = allItems.concat(list));
 
@@ -196,6 +216,11 @@ function initTicker() {
       </div>
     `;
   }).join('');
+
+  // Re-apply pause state if mouse is currently over
+  if (isTickerPaused) {
+    tickerBox.style.animationPlayState = 'paused';
+  }
 }
 
 // Compute Price Signal

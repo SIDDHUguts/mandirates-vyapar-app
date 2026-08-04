@@ -62,7 +62,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding-bottom: 70px; /* Space for mobile bottom bar */
+  padding-bottom: 70px;
 }
 
 @media (min-width: 768px) {
@@ -188,7 +188,7 @@ body {
 }
 
 /* ==========================================================================
-   TICKER BAR WITH HOVER PAUSE ANIMATION (PAUSE ON MOUSE HOVER)
+   TICKER BAR WITH GUARANTEED HOVER PAUSE
    ========================================================================== */
 .ticker-wrapper {
   display: flex;
@@ -199,6 +199,7 @@ body {
   height: 38px;
   cursor: pointer;
   position: relative;
+  user-select: none;
 }
 
 .ticker-badge {
@@ -224,9 +225,12 @@ body {
   will-change: transform;
 }
 
-/* Pause animation when cursor hovers over ticker */
-.ticker-wrapper:hover .ticker-content {
-  animation-play-state: paused;
+/* Strict CSS Pause on Hover */
+.ticker-wrapper:hover .ticker-content,
+.ticker-content:hover,
+.ticker-item:hover {
+  animation-play-state: paused !important;
+  -webkit-animation-play-state: paused !important;
 }
 
 .ticker-item {
@@ -241,7 +245,8 @@ body {
 }
 
 .ticker-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(16, 185, 129, 0.2);
+  color: #FFFFFF;
 }
 
 .ticker-up { color: var(--accent-green); }
@@ -252,7 +257,7 @@ body {
   100% { transform: translateX(-50%); }
 }
 
-/* Tabs Header (Desktop) */
+/* Nav Tabs */
 .nav-tabs {
   display: none;
   background: rgba(15, 23, 42, 0.6);
@@ -293,7 +298,7 @@ body {
   border-color: rgba(16, 185, 129, 0.3);
 }
 
-/* Main Content Area */
+/* Main Content */
 .main-content {
   flex: 1;
   padding: 20px;
@@ -316,7 +321,7 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Section Filters & Chips */
+/* Section Filters */
 .filter-section {
   display: flex;
   flex-direction: column;
