@@ -1,8 +1,8 @@
 // ==========================================================================
-// MANDIRATES & VYAPAR — LIVE SIMULATION ENGINE & REAL-TIME TICKER
+// MANDIRATES & VYAPAR — PERSISTENT LIVE ENGINE & LOCALSTORAGE STORAGE
 // ==========================================================================
 
-const MANDI_DIRECTORY = {
+const DEFAULT_MANDI_DIRECTORY = {
   "Andhra Pradesh": [
     { id: "ap1", mandi: "Madanapalle", comm: "Tomato (Hybrid)", kg: 24.0, change: -4.2, arrivals: 120 },
     { id: "ap2", mandi: "Madanapalle", comm: "Tomato (Local)", kg: 20.0, change: -3.8, arrivals: 95 },
@@ -44,6 +44,29 @@ const MANDI_DIRECTORY = {
   ]
 };
 
+// Load persistent data or initialize
+let MANDI_DIRECTORY = loadPersistentData();
+
+function loadPersistentData() {
+  try {
+    const stored = localStorage.getItem('mandirates_persistent_data_v2');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error("Failed to load stored rates:", e);
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_MANDI_DIRECTORY));
+}
+
+function savePersistentData() {
+  try {
+    localStorage.setItem('mandirates_persistent_data_v2', JSON.stringify(MANDI_DIRECTORY));
+  } catch (e) {
+    console.error("Failed to save rates:", e);
+  }
+}
+
 let currentTab = 'live-rates';
 let currentStateFilter = 'Andhra Pradesh';
 let currentSearchQuery = '';
@@ -66,18 +89,16 @@ document.addEventListener('DOMContentLoaded', () => {
   startLivePriceSimulator();
 });
 
-// Real-Time Live Price Fluctuation Engine (Updates every 4 seconds)
+// Real-Time Live Price Fluctuation Engine (Updates & Persists every 4 seconds)
 function startLivePriceSimulator() {
   liveUpdateTimer = setInterval(() => {
-    // Pick 2 random items to fluctuate
     Object.values(MANDI_DIRECTORY).forEach(list => {
       list.forEach(item => {
-        if (Math.random() > 0.6) {
+        if (Math.random() > 0.5) {
           const delta = (Math.random() - 0.5) * 1.5;
           item.kg = Math.max(5, parseFloat((item.kg + delta).toFixed(1)));
           item.change = parseFloat((item.change + delta * 0.8).toFixed(1));
           
-          // Flash animation trigger on DOM
           const priceElem = document.getElementById(`price-kg-${item.id}`);
           if (priceElem) {
             priceElem.style.color = delta > 0 ? '#EF4444' : '#22C55E';
@@ -89,6 +110,7 @@ function startLivePriceSimulator() {
       });
     });
 
+    savePersistentData(); // Save to localStorage so refresh keeps latest prices
     initTicker();
     renderRates();
     renderTrends();
