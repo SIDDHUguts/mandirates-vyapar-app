@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#10B981">
+  <meta name="description" content="Direct Agriculture & APMC Wholesale Market Hub for Mobile & Desktop">
+  <title>MandiRates & Vyapar — Direct APMC Market Hub</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="index.css">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div id="app" class="app-container">
+    
+    <!-- Top Header Navigation Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="brand-logo">🌾</div>
+        <div class="brand-text">
+          <h1>MandiRates <span class="badge-tag">VYAPAR</span></h1>
+          <p class="subtitle">Direct APMC Market Hub · Live Fluctuation Ticker</p>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button id="pwa-install-btn" class="install-btn hidden">
+          <i data-lucide="download"></i>
+          <span>Download Desktop App</span>
+        </button>
+        <div class="live-status-pill">
+          <span class="pulse-dot"></span>
+          <span>LIVE MANDI FEED</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Continuous Live Ticker Banner -->
+    <div class="ticker-wrapper">
+      <div class="ticker-badge">LIVE APMC TICKER</div>
+      <div class="ticker-content" id="ticker-content">
+        <!-- Dynamic continuous ticker items injected by JS -->
+      </div>
+    </div>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="live-rates">
+        <i data-lucide="bar-chart-3"></i>
+        <span>Live Mandi Rates</span>
+      </button>
+      <button class="nav-tab" data-tab="trend-analytics">
+        <i data-lucide="trending-up"></i>
+        <span>3-Day Trend Radar</span>
+      </button>
+      <button class="nav-tab" data-tab="whatsapp-cards">
+        <i data-lucide="message-square"></i>
+        <span>WhatsApp Broadcast</span>
+      </button>
+      <button class="nav-tab" data-tab="vendor-stock">
+        <i data-lucide="boxes"></i>
+        <span>Vendor Inventory</span>
+      </button>
+    </nav>
+
+    <!-- Main View Content Area -->
+    <main class="main-content">
+      
+      <!-- TAB 1: LIVE MANDI RATES -->
+      <section id="tab-live-rates" class="tab-content active">
+        
+        <!-- Southern State Filter Pills -->
+        <div class="filter-section">
+          <div class="state-chips" id="state-chips">
+            <!-- Chips injected by JS -->
+          </div>
+          
+          <div class="search-bar-container">
+            <div class="search-input-box">
+              <i data-lucide="search" class="search-icon"></i>
+              <input type="text" id="rate-search-input" placeholder="Search Mandi (e.g. Madanapalle) or Commodity (e.g. Tomato)...">
+            </div>
+            <select id="signal-filter-select" class="select-filter">
+              <option value="ALL">All Price Signals</option>
+              <option value="BUY NOW">🟢 BUY NOW (Fair Price)</option>
+              <option value="WAIT">🔴 WAIT (High Price)</option>
+              <option value="STABLE">🟡 STABLE</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mandi Rates Grid Container -->
+        <div class="rates-grid" id="rates-grid">
+          <!-- Cards injected by JS -->
+        </div>
+      </section>
+
+      <!-- TAB 2: 3-DAY TREND RADAR -->
+      <section id="tab-trend-analytics" class="tab-content">
+        <div class="section-banner">
+          <h2>📊 3-Day APMC Price Trend Radar</h2>
+          <p>Real-time price trend analysis comparing yesterday, today, and predictive estimates for bulk inventory buyers.</p>
+        </div>
+        <div class="trends-grid" id="trends-grid">
+          <!-- Trend Cards injected by JS -->
+        </div>
+      </section>
+
+      <!-- TAB 3: WHATSAPP BROADCAST CARDS -->
+      <section id="tab-whatsapp-cards" class="tab-content">
+        <div class="whatsapp-layout">
+          
+          <div class="whatsapp-config-card">
+            <h3>📲 Daily Customer Price Card Setup</h3>
+            <p>Generate clean, formatted daily price updates for customer WhatsApp groups and status updates.</p>
+            
+            <div class="form-group">
+              <label>Select Language / భాష / மொழி / భాషా:</label>
+              <div class="lang-selector" id="lang-selector">
+                <button class="lang-btn active" data-lang="Telugu">Telugu (తెలుగు)</button>
+                <button class="lang-btn" data-lang="Tamil">Tamil (தமிழ்)</button>
+                <button class="lang-btn" data-lang="Kannada">Kannada (ಕನ್ನಡ)</button>
+                <button class="lang-btn" data-lang="Malayalam">Malayalam (മലയാളം)</button>
+                <button class="lang-btn" data-lang="Hindi">Hindi (हिंदी)</button>
+                <button class="lang-btn" data-lang="English">English</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Trader / Business Name:</label>
+              <input type="text" id="trader-name-input" value="Sri Lakshmi Wholesale Vegetables & Fruits" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Mandi Location & Contact Number:</label>
+              <input type="text" id="trader-contact-input" value="Madanapalle APMC · +91 98765 43210" class="form-input">
+            </div>
+
+            <button id="launch-whatsapp-btn" class="whatsapp-send-btn">
+              <i data-lucide="send"></i>
+              <span>Launch WhatsApp 1-Tap Share</span>
+            </button>
+          </div>
+
+          <div class="whatsapp-preview-card">
+            <div class="card-header-wa">
+              <i data-lucide="message-circle" class="wa-icon"></i>
+              <span>WhatsApp Broadcast Preview</span>
+            </div>
+            <pre id="whatsapp-preview-box" class="wa-text-box">Generating WhatsApp card...</pre>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- TAB 4: VENDOR INVENTORY -->
+      <section id="tab-vendor-stock" class="tab-content">
+        <div class="inventory-layout">
+          <div class="inventory-header">
+            <div>
+              <h2>📦 Vendor Inventory & Wholesale Pricing</h2>
+              <p>Manage daily shop stock levels, cost price per kg, and selling margins.</p>
+            </div>
+            <button id="add-stock-btn" class="action-btn">
+              <i data-lucide="plus"></i>
+              <span>Add Stock Item</span>
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="inventory-table">
+              <thead>
+                <tr>
+                  <th>Commodity</th>
+                  <th>Quality Grade</th>
+                  <th>Current Stock</th>
+                  <th>Purchase Rate (/kg)</th>
+                  <th>Selling Rate (/kg)</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-table-body">
+                <!-- Injected by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modal for Detailed 3-Day Trend Breakdown -->
+    <div id="trend-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modal-title">Trend Breakdown</h3>
+          <button id="modal-close-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="mobile-bottom-bar">
+      <button class="mobile-tab active" data-tab="live-rates">
+        <i data-lucide="bar-chart-3"></i>
+        <span>Rates</span>
+      </button>
+      <button class="mobile-tab" data-tab="trend-analytics">
+        <i data-lucide="trending-up"></i>
+        <span>Trends</span>
+      </button>
+      <button class="mobile-tab" data-tab="whatsapp-cards">
+        <i data-lucide="message-square"></i>
+        <span>WhatsApp</span>
+      </button>
+      <button class="mobile-tab" data-tab="vendor-stock">
+        <i data-lucide="boxes"></i>
+        <span>Stock</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>

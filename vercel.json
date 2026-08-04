@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/sw.js", "headers": { "cache-control": "no-cache" }, "dest": "/sw.js" },
+    { "src": "/(.*)", "dest": "/$1" }
+  ]
+}
