@@ -101,6 +101,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .brand-text h1 {
@@ -186,7 +187,9 @@ body {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
-/* Ticker Bar */
+/* ==========================================================================
+   TICKER BAR WITH HOVER PAUSE ANIMATION (PAUSE ON MOUSE HOVER)
+   ========================================================================== */
 .ticker-wrapper {
   display: flex;
   align-items: center;
@@ -194,6 +197,8 @@ body {
   border-bottom: 1px solid var(--border-color);
   overflow: hidden;
   height: 38px;
+  cursor: pointer;
+  position: relative;
 }
 
 .ticker-badge {
@@ -206,7 +211,8 @@ body {
   display: flex;
   align-items: center;
   white-space: nowrap;
-  z-index: 2;
+  z-index: 5;
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
 }
 
 .ticker-content {
@@ -215,6 +221,12 @@ body {
   white-space: nowrap;
   animation: tickerSlide 40s linear infinite;
   padding-left: 20px;
+  will-change: transform;
+}
+
+/* Pause animation when cursor hovers over ticker */
+.ticker-wrapper:hover .ticker-content {
+  animation-play-state: paused;
 }
 
 .ticker-item {
@@ -223,6 +235,13 @@ body {
   gap: 6px;
   font-size: 12px;
   color: var(--text-main);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+}
+
+.ticker-item:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .ticker-up { color: var(--accent-green); }
