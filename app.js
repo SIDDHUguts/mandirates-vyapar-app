@@ -1,5 +1,5 @@
 // ==========================================================================
-// MANDIRATES & VYAPAR — PERSISTENT ENGINE, GEOLOCATION & VENDOR INVENTORY
+// MANDIRATES & VYAPAR — PERSISTENT ENGINE, GEOLOCATION & PREMIUM UI ENHANCEMENTS
 // ==========================================================================
 
 const MANDI_COORDINATES = [
@@ -113,10 +113,12 @@ let userCoordinates = null;
 
 // DOM Ready Initializer
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeToggle();
   initNavigation();
   initStateChips();
   initTicker();
   initTickerHoverEvents();
+  renderSummaryBar();
   renderRates();
   renderTrends();
   renderWhatsAppPreview();
@@ -130,6 +132,76 @@ document.addEventListener('DOMContentLoaded', () => {
   initPWAPrompt();
   startLivePriceSimulator();
 });
+
+// ==========================================================================
+// FEATURE 1: SOLAR LIGHT / DARK THEME TOGGLE ENGINE
+// ==========================================================================
+function initThemeToggle() {
+  const themeBtn = document.getElementById('theme-toggle-btn');
+  if (!themeBtn) return;
+
+  const savedTheme = localStorage.getItem('mandirates_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  themeBtn.addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('mandirates_theme', newTheme);
+  });
+}
+
+// ==========================================================================
+// FEATURE 2: MINI SVG SPARKLINE GENERATOR
+// ==========================================================================
+function generateSparklineSVG(change) {
+  const isUp = change > 0;
+  const strokeColor = isUp ? '#EF4444' : '#22C55E';
+  
+  // Dynamic polyline path
+  const points = isUp 
+    ? "0,28 20,24 40,26 60,18 80,12 100,6" 
+    : "0,6 20,12 40,10 60,18 80,24 100,28";
+
+  return `
+    <svg width="70" height="26" viewBox="0 0 100 32" style="overflow: visible;">
+      <polyline fill="none" stroke="${strokeColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+    </svg>
+  `;
+}
+
+// ==========================================================================
+// FEATURE 3: TOP GAINERS & PRICE DROP SUMMARY BAR
+// ==========================================================================
+function renderSummaryBar() {
+  const container = document.getElementById('summary-bar');
+  if (!container) return;
+
+  let allItems = [];
+  Object.values(MANDI_DIRECTORY).forEach(list => allItems = allItems.concat(list));
+
+  allItems.sort((a, b) => a.change - b.change);
+  const bestDeal = allItems[0]; // Lowest change (biggest drop)
+  const topSpike = allItems[allItems.length - 1]; // Highest change (biggest spike)
+
+  container.innerHTML = `
+    <div class="summary-item">
+      <div>
+        <div class="summary-title">📉 Best Wholesale Deal Today</div>
+        <div class="summary-val summary-down">${bestDeal.mandi}: ${bestDeal.comm} (₹${bestDeal.kg}/kg)</div>
+      </div>
+      <div style="font-weight: bold; color: var(--accent-green); font-size: 13px;">${bestDeal.change}%</div>
+    </div>
+
+    <div class="summary-item">
+      <div>
+        <div class="summary-title">🚀 Highest Price Spike Today</div>
+        <div class="summary-val summary-up">${topSpike.mandi}: ${topSpike.comm} (₹${topSpike.kg}/kg)</div>
+      </div>
+      <div style="font-weight: bold; color: var(--accent-red); font-size: 13px;">+${topSpike.change}%</div>
+    </div>
+  `;
+}
 
 // ==========================================================================
 // VENDOR INVENTORY & ADD STOCK MODAL ENGINE
@@ -165,7 +237,7 @@ function initStockModal() {
         status: document.getElementById('new-stock-status').value
       };
 
-      INVENTORY_DATA.unshift(newItem); // Add to top of list
+      INVENTORY_DATA.unshift(newItem);
       saveInventoryData();
       renderInventory();
 
@@ -211,7 +283,7 @@ function renderInventory() {
 }
 
 // ==========================================================================
-// FEATURE 1: LIVE GEOLOCATION TRACKING & NEAREST MANDI CALCULATOR
+// FEATURE 4: LIVE GEOLOCATION TRACKING
 // ==========================================================================
 function initGeolocationTracking() {
   const geoBtn = document.getElementById('geo-location-btn');
@@ -277,7 +349,7 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 // ==========================================================================
-// FEATURE 2: IN-APP VOICE SEARCH MIC WIDGET
+// FEATURE 5: IN-APP VOICE SEARCH MIC WIDGET
 // ==========================================================================
 function initVoiceSearch() {
   const micBtn = document.getElementById('voice-search-btn');
@@ -322,9 +394,7 @@ function initVoiceSearch() {
   };
 }
 
-// ==========================================================================
 // CALCULATORS
-// ==========================================================================
 function initCalculators() {
   document.getElementById('calculate-freight-btn').addEventListener('click', calculateFreight);
 
@@ -498,6 +568,7 @@ function startLivePriceSimulator() {
 
     savePersistentData();
     initTicker();
+    renderSummaryBar();
     renderRates();
     renderTrends();
   }, 4000);
@@ -592,12 +663,12 @@ function initTicker() {
 
 // Signal
 function getSignal(change) {
-  if (change <= -3.5) return { text: "BUY NOW", emoji: "🟢", class: "badge-buy", desc: "Fair Wholesale Price" };
-  if (change >= 3.5) return { text: "WAIT", emoji: "🔴", class: "badge-wait", desc: "Price Spike Expected" };
-  return { text: "STABLE", emoji: "🟡", class: "badge-stable", desc: "Normal Market Rate" };
+  if (change <= -3.5) return { text: "BUY NOW", emoji: "🟢", class: "badge-buy", glowClass: "glow-buy", desc: "Fair Wholesale Price" };
+  if (change >= 3.5) return { text: "WAIT", emoji: "🔴", class: "badge-wait", glowClass: "glow-wait", desc: "Price Spike Expected" };
+  return { text: "STABLE", emoji: "🟡", class: "badge-stable", glowClass: "glow-stable", desc: "Normal Market Rate" };
 }
 
-// Render Rates
+// Render Rates with Mini Sparklines & Neon Glow Borders
 function renderRates() {
   const grid = document.getElementById('rates-grid');
   let list = [];
@@ -627,9 +698,10 @@ function renderRates() {
     const isUp = item.change > 0;
     const pctCls = isUp ? 'pct-up' : 'pct-down';
     const sign = isUp ? '+' : '';
+    const sparkline = generateSparklineSVG(item.change);
 
     return `
-      <div class="rate-card">
+      <div class="rate-card ${item.signal.glowClass}">
         <div>
           <div class="card-top">
             <div>
@@ -642,14 +714,19 @@ function renderRates() {
           </div>
 
           <div class="card-price-main">
-            <div class="price-kg" id="price-kg-${item.id}">₹${item.kg} <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">/ kg</span></div>
-            <div class="price-qnt">₹${(item.kg * 100).toFixed(0)} / Quintal (100 kg)</div>
+            <div>
+              <div class="price-kg" id="price-kg-${item.id}">₹${item.kg} <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">/ kg</span></div>
+              <div class="price-qnt">₹${(item.kg * 100).toFixed(0)} / Quintal (100 kg)</div>
+            </div>
+            <div>
+              ${sparkline}
+            </div>
           </div>
         </div>
 
         <div class="card-footer">
           <div>
-            <div style="font-size: 11px; color: var(--text-muted);">24h Live Change:</div>
+            <div style="font-size: 11px; color: var(--text-muted);">24h Trend:</div>
             <div class="pct-pill ${pctCls}">${sign}${item.change}%</div>
           </div>
           <button class="btn-detail" onclick="openTrendModal('${item.mandi}', '${item.comm}', ${item.kg}, ${item.change})">
@@ -766,7 +843,7 @@ function renderTrends() {
           <span class="signal-badge ${sig.class}">${sig.emoji} ${sig.text}</span>
         </div>
         <div style="font-size: 13px; color: var(--text-muted); margin: 8px 0;">
-          Today's Live Rate: <strong style="color: #FFF;">₹${item.kg}/kg</strong> (₹${(item.kg * 100).toFixed(0)}/qnt)
+          Today's Live Rate: <strong style="color: var(--primary-emerald);">₹${item.kg}/kg</strong> (₹${(item.kg * 100).toFixed(0)}/qnt)
         </div>
         <button class="btn-detail" style="width: 100%; text-align: center;" onclick="openTrendModal('${item.mandi}', '${item.comm}', ${item.kg}, ${item.change})">
           View Detailed 3-Day Forecast
