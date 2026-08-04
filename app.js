@@ -1,5 +1,5 @@
 // ==========================================================================
-// MANDIRATES & VYAPAR — PERSISTENT ENGINE, GEOLOCATION & ALL 4 ADVANCED TABS
+// MANDIRATES & VYAPAR — PERSISTENT ENGINE, GEOLOCATION & VENDOR INVENTORY
 // ==========================================================================
 
 const MANDI_COORDINATES = [
@@ -55,7 +55,15 @@ const DEFAULT_MANDI_DIRECTORY = {
   ]
 };
 
+const DEFAULT_INVENTORY_DATA = [
+  { name: "Tomato (Hybrid)", grade: "Madanapalle A-Grade", qty: "450 kg", cost: "₹20", sell: "₹24", status: "In Stock" },
+  { name: "Small Onion", grade: "Dindigul Selected", qty: "200 kg", cost: "₹42", sell: "₹48", status: "In Stock" },
+  { name: "Garlic", grade: "Kodaikanal Premium", qty: "80 kg", cost: "₹95", sell: "₹110", status: "Low Stock" },
+  { name: "Red Chili", grade: "Guntur Teja", qty: "150 kg", cost: "₹170", sell: "₹185", status: "In Stock" }
+];
+
 let MANDI_DIRECTORY = loadPersistentData();
+let INVENTORY_DATA = loadInventoryData();
 
 function loadPersistentData() {
   try {
@@ -72,6 +80,24 @@ function savePersistentData() {
     localStorage.setItem('mandirates_persistent_data_v2', JSON.stringify(MANDI_DIRECTORY));
   } catch (e) {
     console.error("Failed to save rates:", e);
+  }
+}
+
+function loadInventoryData() {
+  try {
+    const stored = localStorage.getItem('mandirates_inventory_data_v2');
+    if (stored) return JSON.parse(stored);
+  } catch (e) {
+    console.error("Failed to load inventory:", e);
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_INVENTORY_DATA));
+}
+
+function saveInventoryData() {
+  try {
+    localStorage.setItem('mandirates_inventory_data_v2', JSON.stringify(INVENTORY_DATA));
+  } catch (e) {
+    console.error("Failed to save inventory:", e);
   }
 }
 
@@ -100,9 +126,89 @@ document.addEventListener('DOMContentLoaded', () => {
   initGeolocationTracking();
   initVoiceSearch();
   initCalculators();
+  initStockModal();
   initPWAPrompt();
   startLivePriceSimulator();
 });
+
+// ==========================================================================
+// VENDOR INVENTORY & ADD STOCK MODAL ENGINE
+// ==========================================================================
+function initStockModal() {
+  const addStockBtn = document.getElementById('add-stock-btn');
+  const stockModal = document.getElementById('stock-modal');
+  const closeBtn = document.getElementById('stock-modal-close-btn');
+  const form = document.getElementById('add-stock-form');
+
+  if (addStockBtn) {
+    addStockBtn.addEventListener('click', () => {
+      stockModal.classList.remove('hidden');
+    });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      stockModal.classList.add('hidden');
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const newItem = {
+        name: document.getElementById('new-stock-name').value,
+        grade: document.getElementById('new-stock-grade').value,
+        qty: document.getElementById('new-stock-qty').value,
+        cost: document.getElementById('new-stock-cost').value,
+        sell: document.getElementById('new-stock-sell').value,
+        status: document.getElementById('new-stock-status').value
+      };
+
+      INVENTORY_DATA.unshift(newItem); // Add to top of list
+      saveInventoryData();
+      renderInventory();
+
+      form.reset();
+      stockModal.classList.add('hidden');
+    });
+  }
+}
+
+function deleteStockItem(index) {
+  if (confirm("Remove this stock item from your inventory?")) {
+    INVENTORY_DATA.splice(index, 1);
+    saveInventoryData();
+    renderInventory();
+  }
+}
+window.deleteStockItem = deleteStockItem;
+
+function renderInventory() {
+  const tbody = document.getElementById('inventory-table-body');
+  if (!tbody) return;
+
+  if (INVENTORY_DATA.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 20px; color: var(--text-muted);">No stock items added yet. Click "+ Add Stock Item" to create one.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = INVENTORY_DATA.map((item, index) => `
+    <tr>
+      <td><strong>${item.name}</strong></td>
+      <td>${item.grade}</td>
+      <td>${item.qty}</td>
+      <td>${item.cost}</td>
+      <td><strong style="color: var(--primary-emerald);">${item.sell}</strong></td>
+      <td><span style="background: rgba(16, 185, 129, 0.15); color: var(--primary-emerald); padding: 2px 8px; border-radius: 10px; font-size: 11px;">${item.status}</span></td>
+      <td>
+        <button onclick="deleteStockItem(${index})" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: var(--accent-red); padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;">
+          Delete
+        </button>
+      </td>
+    </tr>
+  `).join('');
+}
 
 // ==========================================================================
 // FEATURE 1: LIVE GEOLOCATION TRACKING & NEAREST MANDI CALCULATOR
@@ -142,7 +248,6 @@ function initGeolocationTracking() {
         geoText.textContent = `📍 ${closestMandi.mandi} (${minDistance.toFixed(0)} km)`;
         geoBtn.style.opacity = "1";
 
-        // Set active state filter to nearest state
         currentStateFilter = closestMandi.state;
         initStateChips();
         renderRates();
@@ -172,7 +277,7 @@ function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 // ==========================================================================
-// FEATURE 2: IN-APP VOICE SEARCH MIC WIDGET (WEB SPEECH API)
+// FEATURE 2: IN-APP VOICE SEARCH MIC WIDGET
 // ==========================================================================
 function initVoiceSearch() {
   const micBtn = document.getElementById('voice-search-btn');
@@ -188,7 +293,7 @@ function initVoiceSearch() {
   const recognition = new SpeechRecognition();
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.lang = 'en-IN'; // Default to Indian English, auto-detects Telugu/Hindi phrases
+  recognition.lang = 'en-IN';
 
   micBtn.addEventListener('click', () => {
     try {
@@ -218,13 +323,11 @@ function initVoiceSearch() {
 }
 
 // ==========================================================================
-// FEATURE 3 & 4: FREIGHT CALCULATOR & MARGIN BILL GENERATOR
+// CALCULATORS
 // ==========================================================================
 function initCalculators() {
-  // Freight Calculator
   document.getElementById('calculate-freight-btn').addEventListener('click', calculateFreight);
 
-  // Profit Margin & UPI Bill Generator
   const billInputs = ['bill-comm-input', 'bill-purchase-input', 'bill-wastage-input', 'bill-margin-input', 'bill-customer-input', 'bill-qty-input', 'bill-upi-input'];
   billInputs.forEach(id => {
     document.getElementById(id).addEventListener('input', generateCustomerBill);
@@ -247,11 +350,11 @@ function calculateFreight() {
   if (dest.includes("Vijayawada")) approxKm = 380;
   if (dest.includes("Kochi")) approxKm = 580;
 
-  let baseRatePerKm = 28; // Bolero
+  let baseRatePerKm = 28;
   if (vehicle.includes("Eicher")) baseRatePerKm = 42;
   if (vehicle.includes("6-Wheeler")) baseRatePerKm = 65;
 
-  const totalFreight = (approxKm * baseRatePerKm) + 800; // Total transport cost including toll
+  const totalFreight = (approxKm * baseRatePerKm) + 800;
   const totalKg = qtyQtl * 100;
   const freightPerKg = (totalFreight / totalKg).toFixed(2);
   const landedRateKg = (costKg + parseFloat(freightPerKg)).toFixed(2);
@@ -322,9 +425,7 @@ function generateCustomerBill() {
   `;
 }
 
-// ==========================================================================
-// FEATURE 5: CLIMATE & CROP SUPPLY RISK ALERTS
-// ==========================================================================
+// WEATHER
 function renderWeatherAlerts() {
   const container = document.getElementById('weather-grid');
   const weatherData = [
@@ -374,7 +475,7 @@ function initTickerHoverEvents() {
   }
 }
 
-// Live Price Simulator Engine
+// Live Price Simulator
 function startLivePriceSimulator() {
   liveUpdateTimer = setInterval(() => {
     Object.values(MANDI_DIRECTORY).forEach(list => {
@@ -709,26 +810,4 @@ function renderWhatsAppPreview() {
   const footer = `----------------------------------\n⚡ *Best Wholesale Rates Guaranteed!*\n📞 *Call / WhatsApp Order Now!*`;
 
   previewBox.textContent = header + body + footer;
-}
-
-// Render Inventory Table
-function renderInventory() {
-  const tbody = document.getElementById('inventory-table-body');
-  const stockData = [
-    { name: "Tomato (Hybrid)", grade: "Madanapalle A-Grade", qty: "450 kg", cost: "₹20", sell: "₹24", status: "In Stock" },
-    { name: "Small Onion", grade: "Dindigul Selected", qty: "200 kg", cost: "₹42", sell: "₹48", status: "In Stock" },
-    { name: "Garlic", grade: "Kodaikanal Premium", qty: "80 kg", cost: "₹95", sell: "₹110", status: "Low Stock" },
-    { name: "Red Chili", grade: "Guntur Teja", qty: "150 kg", cost: "₹170", sell: "₹185", status: "In Stock" }
-  ];
-
-  tbody.innerHTML = stockData.map(item => `
-    <tr>
-      <td><strong>${item.name}</strong></td>
-      <td>${item.grade}</td>
-      <td>${item.qty}</td>
-      <td>${item.cost}</td>
-      <td><strong style="color: var(--primary-emerald);">${item.sell}</strong></td>
-      <td><span style="background: rgba(16, 185, 129, 0.15); color: var(--primary-emerald); padding: 2px 8px; border-radius: 10px; font-size: 11px;">${item.status}</span></td>
-    </tr>
-  `).join('');
 }

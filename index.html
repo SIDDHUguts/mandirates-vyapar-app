@@ -335,7 +335,7 @@
       <!-- TAB 7: VENDOR INVENTORY -->
       <section id="tab-vendor-stock" class="tab-content">
         <div class="inventory-layout">
-          <div class="inventory-header">
+          <div class="inventory-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <div>
               <h2>📦 Vendor Inventory & Wholesale Pricing</h2>
               <p>Manage daily shop stock levels, cost price per kg, and selling margins.</p>
@@ -356,6 +356,7 @@
                   <th>Purchase Rate (/kg)</th>
                   <th>Selling Rate (/kg)</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="inventory-table-body">
@@ -367,6 +368,56 @@
       </section>
 
     </main>
+
+    <!-- Modal for Adding Stock Item -->
+    <div id="stock-modal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>📦 Add New Stock Item</h3>
+          <button id="stock-modal-close-btn" class="close-btn">&times;</button>
+        </div>
+        <form id="add-stock-form" class="modal-body">
+          <div class="form-group">
+            <label>Commodity Name:</label>
+            <input type="text" id="new-stock-name" placeholder="e.g. Onion (Nashik Red)" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Quality Grade:</label>
+            <input type="text" id="new-stock-grade" placeholder="e.g. Grade A Selected" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Current Stock Quantity (kg):</label>
+            <input type="text" id="new-stock-qty" placeholder="e.g. 350 kg" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Purchase Rate (₹/kg):</label>
+            <input type="text" id="new-stock-cost" placeholder="e.g. ₹18" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Selling Rate (₹/kg):</label>
+            <input type="text" id="new-stock-sell" placeholder="e.g. ₹22" required class="form-input">
+          </div>
+
+          <div class="form-group">
+            <label>Stock Status:</label>
+            <select id="new-stock-status" class="form-input">
+              <option value="In Stock">In Stock</option>
+              <option value="Low Stock">Low Stock</option>
+              <option value="Out of Stock">Out of Stock</option>
+            </select>
+          </div>
+
+          <button type="submit" class="whatsapp-send-btn">
+            <i data-lucide="plus-circle"></i>
+            <span>Save Stock Item to Inventory</span>
+          </button>
+        </form>
+      </div>
+    </div>
 
     <!-- Modal for Detailed 3-Day Trend Breakdown -->
     <div id="trend-modal" class="modal-backdrop hidden">
@@ -406,6 +457,10 @@
       <button class="mobile-tab" data-tab="whatsapp-cards">
         <i data-lucide="message-square"></i>
         <span>WhatsApp</span>
+      </button>
+      <button class="mobile-tab" data-tab="vendor-stock">
+        <i data-lucide="boxes"></i>
+        <span>Stock</span>
       </button>
     </nav>
 
