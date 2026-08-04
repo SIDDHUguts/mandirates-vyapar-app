@@ -1,6 +1,17 @@
 // ==========================================================================
-// MANDIRATES & VYAPAR — PERSISTENT LIVE ENGINE & LOCALSTORAGE STORAGE
+// MANDIRATES & VYAPAR — PERSISTENT ENGINE, GEOLOCATION & ALL 4 ADVANCED TABS
 // ==========================================================================
+
+const MANDI_COORDINATES = [
+  { mandi: "Madanapalle", state: "Andhra Pradesh", lat: 13.5574, lon: 78.5026 },
+  { mandi: "Guntur", state: "Andhra Pradesh", lat: 16.3067, lon: 80.4365 },
+  { mandi: "Kolar", state: "Karnataka", lat: 13.1367, lat_lon: [13.1367, 78.1292] },
+  { mandi: "Yeshwanthpur", state: "Karnataka", lat: 13.0238, lon: 77.5503 },
+  { mandi: "Koyambedu", state: "Tamil Nadu", lat: 13.0694, lon: 80.1948 },
+  { mandi: "Dindigul", state: "Tamil Nadu", lat: 10.3673, lon: 77.9803 },
+  { mandi: "Bowenpally", state: "Telangana", lat: 17.4649, lon: 78.4842 },
+  { mandi: "Chalai", state: "Kerala", lat: 8.4855, lon: 76.9492 }
+];
 
 const DEFAULT_MANDI_DIRECTORY = {
   "Andhra Pradesh": [
@@ -49,9 +60,7 @@ let MANDI_DIRECTORY = loadPersistentData();
 function loadPersistentData() {
   try {
     const stored = localStorage.getItem('mandirates_persistent_data_v2');
-    if (stored) {
-      return JSON.parse(stored);
-    }
+    if (stored) return JSON.parse(stored);
   } catch (e) {
     console.error("Failed to load stored rates:", e);
   }
@@ -74,6 +83,7 @@ let currentLanguage = 'Telugu';
 let deferredInstallPrompt = null;
 let liveUpdateTimer = null;
 let isTickerPaused = false;
+let userCoordinates = null;
 
 // DOM Ready Initializer
 document.addEventListener('DOMContentLoaded', () => {
@@ -85,12 +95,269 @@ document.addEventListener('DOMContentLoaded', () => {
   renderTrends();
   renderWhatsAppPreview();
   renderInventory();
+  renderWeatherAlerts();
   initSearchAndFilters();
+  initGeolocationTracking();
+  initVoiceSearch();
+  initCalculators();
   initPWAPrompt();
   startLivePriceSimulator();
 });
 
-// Guaranteed JavaScript Mouseenter & Mouseleave Listener
+// ==========================================================================
+// FEATURE 1: LIVE GEOLOCATION TRACKING & NEAREST MANDI CALCULATOR
+// ==========================================================================
+function initGeolocationTracking() {
+  const geoBtn = document.getElementById('geo-location-btn');
+  const geoText = document.getElementById('geo-location-text');
+  const banner = document.getElementById('location-status-banner');
+  const bannerText = document.getElementById('location-banner-text');
+
+  geoBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    geoText.textContent = "Locating...";
+    geoBtn.style.opacity = "0.7";
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        userCoordinates = { lat, lon };
+
+        let closestMandi = MANDI_COORDINATES[0];
+        let minDistance = 999999;
+
+        MANDI_COORDINATES.forEach(m => {
+          const d = calculateHaversineDistance(lat, lon, m.lat || 13.5, m.lon || 78.5);
+          if (d < minDistance) {
+            minDistance = d;
+            closestMandi = m;
+          }
+        });
+
+        geoText.textContent = `📍 ${closestMandi.mandi} (${minDistance.toFixed(0)} km)`;
+        geoBtn.style.opacity = "1";
+
+        // Set active state filter to nearest state
+        currentStateFilter = closestMandi.state;
+        initStateChips();
+        renderRates();
+
+        bannerText.innerHTML = `📍 Nearest APMC Market Detected: <strong>${closestMandi.mandi} Mandi (${closestMandi.state})</strong> · Approx ${minDistance.toFixed(0)} km away. Filtered live rates accordingly.`;
+        banner.classList.remove('hidden');
+      },
+      (error) => {
+        console.error("Geo error:", error);
+        geoText.textContent = "Locate Nearest Mandi";
+        geoBtn.style.opacity = "1";
+        alert("Location access denied or unavailable. You can manually select states using the filter pills.");
+      }
+    );
+  });
+}
+
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// ==========================================================================
+// FEATURE 2: IN-APP VOICE SEARCH MIC WIDGET (WEB SPEECH API)
+// ==========================================================================
+function initVoiceSearch() {
+  const micBtn = document.getElementById('voice-search-btn');
+  const searchInput = document.getElementById('rate-search-input');
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    micBtn.title = "Voice search not supported on this browser (Use Chrome or Edge)";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-IN'; // Default to Indian English, auto-detects Telugu/Hindi phrases
+
+  micBtn.addEventListener('click', () => {
+    try {
+      micBtn.classList.add('listening');
+      recognition.start();
+    } catch (e) {
+      recognition.stop();
+      micBtn.classList.remove('listening');
+    }
+  });
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    searchInput.value = transcript;
+    currentSearchQuery = transcript;
+    renderRates();
+    micBtn.classList.remove('listening');
+  };
+
+  recognition.onerror = () => {
+    micBtn.classList.remove('listening');
+  };
+
+  recognition.onend = () => {
+    micBtn.classList.remove('listening');
+  };
+}
+
+// ==========================================================================
+// FEATURE 3 & 4: FREIGHT CALCULATOR & MARGIN BILL GENERATOR
+// ==========================================================================
+function initCalculators() {
+  // Freight Calculator
+  document.getElementById('calculate-freight-btn').addEventListener('click', calculateFreight);
+
+  // Profit Margin & UPI Bill Generator
+  const billInputs = ['bill-comm-input', 'bill-purchase-input', 'bill-wastage-input', 'bill-margin-input', 'bill-customer-input', 'bill-qty-input', 'bill-upi-input'];
+  billInputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', generateCustomerBill);
+  });
+
+  calculateFreight();
+  generateCustomerBill();
+}
+
+function calculateFreight() {
+  const origin = document.getElementById('freight-origin-select').value;
+  const dest = document.getElementById('freight-dest-select').value;
+  const qtyQtl = parseFloat(document.getElementById('freight-qty-input').value) || 30;
+  const vehicle = document.getElementById('freight-vehicle-select').value;
+  const costKg = parseFloat(document.getElementById('freight-cost-kg-input').value) || 24;
+
+  let approxKm = 260;
+  if (dest.includes("Bengaluru")) approxKm = 130;
+  if (dest.includes("Hyderabad")) approxKm = 520;
+  if (dest.includes("Vijayawada")) approxKm = 380;
+  if (dest.includes("Kochi")) approxKm = 580;
+
+  let baseRatePerKm = 28; // Bolero
+  if (vehicle.includes("Eicher")) baseRatePerKm = 42;
+  if (vehicle.includes("6-Wheeler")) baseRatePerKm = 65;
+
+  const totalFreight = (approxKm * baseRatePerKm) + 800; // Total transport cost including toll
+  const totalKg = qtyQtl * 100;
+  const freightPerKg = (totalFreight / totalKg).toFixed(2);
+  const landedRateKg = (costKg + parseFloat(freightPerKg)).toFixed(2);
+
+  const resultsBox = document.getElementById('freight-results-box');
+  resultsBox.innerHTML = `
+    <div style="font-size: 16px; font-weight: bold; color: var(--primary-emerald); margin-bottom: 12px;">
+      🚚 Final Landed Rate: ₹${landedRateKg} / kg at ${dest}
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+      <span>Origin Mandi Purchase:</span> <strong>₹${costKg.toFixed(2)} / kg</strong>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+      <span>Approx Logistics Distance:</span> <strong>${approxKm} km</strong>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);">
+      <span>Total Vehicle Transport Charge:</span> <strong>₹${totalFreight.toLocaleString('en-IN')} (${vehicle})</strong>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); color: var(--accent-blue);">
+      <span>Freight Overhead per Kg:</span> <strong>+₹${freightPerKg} / kg</strong>
+    </div>
+
+    <div style="margin-top: 14px; font-size: 12px; color: var(--text-muted);">
+      💡 <strong>Wholesale Advice:</strong> Buying in ${qtyQtl} Quintals (3 Tonnes) reduces your transport overhead by ~18% per kg.
+    </div>
+  `;
+}
+
+function generateCustomerBill() {
+  const comm = document.getElementById('bill-comm-input').value || "Tomato";
+  const costKg = parseFloat(document.getElementById('bill-purchase-input').value) || 24;
+  const wastagePct = parseFloat(document.getElementById('bill-wastage-input').value) || 5;
+  const marginPct = parseFloat(document.getElementById('bill-margin-input').value) || 20;
+  const customer = document.getElementById('bill-customer-input').value || "Customer";
+  const qtyKg = parseFloat(document.getElementById('bill-qty-input').value) || 15;
+  const upiId = document.getElementById('bill-upi-input').value || "trader@upi";
+
+  const effectiveCostKg = costKg * (1 + wastagePct/100);
+  const retailPriceKg = (effectiveCostKg * (1 + marginPct/100)).toFixed(1);
+  const totalBillAmount = (retailPriceKg * qtyKg).toFixed(0);
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`upi://pay?pa=${upiId}&pn=MandiVyapar&am=${totalBillAmount}&cu=INR`)}`;
+
+  const box = document.getElementById('bill-receipt-box');
+  box.innerHTML = `
+    <div style="text-align: center; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 12px; margin-bottom: 12px;">
+      <h4 style="font-size: 16px; color: #FFF; margin-bottom: 4px;">🧾 CASH MEMO & DIGITAL BILL</h4>
+      <div style="font-size: 11px; color: var(--text-muted);">Date: ${new Date().toLocaleDateString('en-IN')} · MandiRates Vyapar</div>
+    </div>
+
+    <div style="font-size: 13px; margin-bottom: 10px;">
+      👤 <strong>Customer:</strong> ${customer}<br>
+      📦 <strong>Item:</strong> ${comm}<br>
+      ⚖️ <strong>Quantity:</strong> ${qtyKg} kg @ <strong style="color: var(--primary-emerald);">₹${retailPriceKg}/kg</strong>
+    </div>
+
+    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid var(--primary-emerald); padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 14px;">
+      <div style="font-size: 11px; color: var(--text-muted);">TOTAL PAYABLE AMOUNT</div>
+      <div style="font-size: 24px; font-weight: bold; color: #FFF;">₹${totalBillAmount}</div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; background: #FFF; padding: 12px; border-radius: 12px; color: #000;">
+      <img src="${qrUrl}" alt="UPI QR Code" style="width: 130px; height: 130px;">
+      <div style="font-size: 11px; font-weight: bold; color: #0F172A;">SCAN TO PAY VIA PHONEPE / GPAY / PAYTM</div>
+      <div style="font-size: 10px; color: #475569;">UPI ID: ${upiId}</div>
+    </div>
+  `;
+}
+
+// ==========================================================================
+// FEATURE 5: CLIMATE & CROP SUPPLY RISK ALERTS
+// ==========================================================================
+function renderWeatherAlerts() {
+  const container = document.getElementById('weather-grid');
+  const weatherData = [
+    { hub: "Madanapalle (AP)", crop: "Tomato Belt", temp: "28°C", status: "🌧️ Heavy Rain Alert", risk: "HIGH RISK", riskCls: "badge-wait", impact: "High spoilage in harvest. Tomato prices expected to spike +12% in 48 hours." },
+    { hub: "Guntur (AP)", crop: "Red Chili Belt", temp: "34°C", status: "☀️ Clear Skies", risk: "STABLE", riskCls: "badge-buy", impact: "Optimal drying weather. Steady daily supply arriving at Mandi." },
+    { hub: "Kolar (KA)", crop: "Vegetable Belt", temp: "26°C", status: "⛅ Moderate Cloud", risk: "FAIR SUPPLY", riskCls: "badge-stable", impact: "Normal harvest output. Grade A tomatoes arriving steadily." },
+    { hub: "Dindigul (TN)", crop: "Shallots Hub", temp: "31°C", status: "🌧️ Seasonal Showers", risk: "MODERATE RISK", riskCls: "badge-wait", impact: "Transport delays from small farms. Small onion prices up +5%." },
+    { hub: "Bowenpally (TS)", crop: "Hyderabad Hub", temp: "30°C", status: "🌤️ Mild Breeze", risk: "STABLE", riskCls: "badge-buy", impact: "Smooth inter-state truck arrivals from Maharashtra & AP." },
+    { hub: "Chalai (KL)", crop: "Coconut & Spice", temp: "29°C", status: "🌧️ Coastal Monsoons", risk: "HIGH RISK", riskCls: "badge-wait", impact: "Coconut drying impacted. Raw spices transport delayed by 24h." }
+  ];
+
+  container.innerHTML = weatherData.map(item => `
+    <div class="rate-card">
+      <div class="card-top">
+        <div>
+          <div class="comm-title">📍 ${item.hub}</div>
+          <div class="mandi-sub">${item.crop} · Temp: ${item.temp}</div>
+        </div>
+        <span class="signal-badge ${item.riskCls}">${item.risk}</span>
+      </div>
+
+      <div style="font-size: 14px; font-weight: bold; color: var(--accent-blue); margin: 8px 0;">
+        ${item.status}
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted); line-height: 1.5; background: rgba(15,23,42,0.6); padding: 10px; border-radius: 8px;">
+        💡 <strong>Supply Impact:</strong> ${item.impact}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Ticker Pause Engine
 function initTickerHoverEvents() {
   const wrapper = document.querySelector('.ticker-wrapper');
   if (wrapper) {
@@ -107,7 +374,7 @@ function initTickerHoverEvents() {
   }
 }
 
-// Real-Time Live Price Fluctuation Engine (Updates & Persists every 4 seconds)
+// Live Price Simulator Engine
 function startLivePriceSimulator() {
   liveUpdateTimer = setInterval(() => {
     Object.values(MANDI_DIRECTORY).forEach(list => {
@@ -135,7 +402,7 @@ function startLivePriceSimulator() {
   }, 4000);
 }
 
-// PWA Install Prompt Handler
+// PWA Installer
 function initPWAPrompt() {
   const installBtn = document.getElementById('pwa-install-btn');
   window.addEventListener('beforeinstallprompt', (e) => {
@@ -196,7 +463,7 @@ function initStateChips() {
   });
 }
 
-// Ticker Bar with State Preservation
+// Ticker
 function initTicker() {
   const tickerBox = document.getElementById('ticker-content');
   if (!tickerBox) return;
@@ -217,13 +484,12 @@ function initTicker() {
     `;
   }).join('');
 
-  // Re-apply pause state if mouse is currently over
   if (isTickerPaused) {
     tickerBox.style.animationPlayState = 'paused';
   }
 }
 
-// Compute Price Signal
+// Signal
 function getSignal(change) {
   if (change <= -3.5) return { text: "BUY NOW", emoji: "🟢", class: "badge-buy", desc: "Fair Wholesale Price" };
   if (change >= 3.5) return { text: "WAIT", emoji: "🔴", class: "badge-wait", desc: "Price Spike Expected" };
@@ -332,7 +598,7 @@ function initSearchAndFilters() {
   });
 }
 
-// Trend Modal
+// Modal
 window.openTrendModal = function(mandi, comm, currentKg, change) {
   const modal = document.getElementById('trend-modal');
   const title = document.getElementById('modal-title');

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#10B981">
-  <meta name="description" content="Direct Agriculture & APMC Wholesale Market Hub for Mobile & Desktop">
+  <meta name="description" content="Direct Agriculture & APMC Wholesale Market Hub with Geolocation Tracking for Mobile & Desktop">
   <title>MandiRates & Vyapar — Direct APMC Market Hub</title>
   
   <!-- Custom Favicons & App Icons -->
@@ -37,10 +37,17 @@
       </div>
       
       <div class="header-actions">
+        <!-- Live Geolocation Location Tracker Button -->
+        <button id="geo-location-btn" class="geo-btn" title="Detect Nearest Mandi & Nearby Rates">
+          <i data-lucide="map-pin"></i>
+          <span id="geo-location-text">Detect Nearest Mandi</span>
+        </button>
+
         <button id="pwa-install-btn" class="install-btn hidden">
           <i data-lucide="download"></i>
-          <span>Download Desktop App</span>
+          <span>Download App</span>
         </button>
+
         <div class="live-status-pill">
           <span class="pulse-dot"></span>
           <span>LIVE MANDI FEED</span>
@@ -66,6 +73,18 @@
         <i data-lucide="trending-up"></i>
         <span>3-Day Trend Radar</span>
       </button>
+      <button class="nav-tab" data-tab="freight-calc">
+        <i data-lucide="truck"></i>
+        <span>Freight & Landed Cost</span>
+      </button>
+      <button class="nav-tab" data-tab="profit-bill">
+        <i data-lucide="calculator"></i>
+        <span>Margin & UPI Bill</span>
+      </button>
+      <button class="nav-tab" data-tab="weather-alerts">
+        <i data-lucide="cloud-rain"></i>
+        <span>Weather Supply Risk</span>
+      </button>
       <button class="nav-tab" data-tab="whatsapp-cards">
         <i data-lucide="message-square"></i>
         <span>WhatsApp Broadcast</span>
@@ -82,6 +101,12 @@
       <!-- TAB 1: LIVE MANDI RATES -->
       <section id="tab-live-rates" class="tab-content active">
         
+        <!-- Location Status Banner -->
+        <div id="location-status-banner" class="location-banner hidden">
+          <i data-lucide="navigation" class="loc-icon"></i>
+          <span id="location-banner-text">Location detected! Showing nearest Mandi rates.</span>
+        </div>
+
         <!-- Southern State Filter Pills -->
         <div class="filter-section">
           <div class="state-chips" id="state-chips">
@@ -92,7 +117,13 @@
             <div class="search-input-box">
               <i data-lucide="search" class="search-icon"></i>
               <input type="text" id="rate-search-input" placeholder="Search Mandi (e.g. Madanapalle) or Commodity (e.g. Tomato)...">
+              
+              <!-- Voice Search Mic Widget -->
+              <button id="voice-search-btn" class="voice-mic-btn" title="Speak to Search (Telugu, Tamil, Kannada, Hindi, English)">
+                <i data-lucide="mic"></i>
+              </button>
             </div>
+
             <select id="signal-filter-select" class="select-filter">
               <option value="ALL">All Price Signals</option>
               <option value="BUY NOW">🟢 BUY NOW (Fair Price)</option>
@@ -119,7 +150,142 @@
         </div>
       </section>
 
-      <!-- TAB 3: WHATSAPP BROADCAST CARDS -->
+      <!-- TAB 3: FREIGHT & LANDED COST CALCULATOR -->
+      <section id="tab-freight-calc" class="tab-content">
+        <div class="calculator-layout">
+          <div class="calc-config-card">
+            <h3>🚛 Freight & Landed Cost Calculator</h3>
+            <p>Calculate transport cost per Quintal/Kg from wholesale Mandis to your destination market.</p>
+            
+            <div class="form-group">
+              <label>Select Origin Mandi:</label>
+              <select id="freight-origin-select" class="form-input">
+                <option value="Madanapalle (AP)">Madanapalle APMC (Tomato Hub)</option>
+                <option value="Guntur (AP)">Guntur APMC (Chili Hub)</option>
+                <option value="Kolar (KA)">Kolar APMC (Vegetable Hub)</option>
+                <option value="Yeshwanthpur (KA)">Yeshwanthpur Bengaluru</option>
+                <option value="Dindigul (TN)">Dindigul APMC (Shallots Hub)</option>
+                <option value="Koyambedu (TN)">Koyambedu Chennai</option>
+                <option value="Bowenpally (TS)">Bowenpally Hyderabad</option>
+                <option value="Chalai (KL)">Chalai Thiruvananthapuram</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Destination Market City:</label>
+              <select id="freight-dest-select" class="form-input">
+                <option value="Chennai Koyambedu">Chennai Koyambedu Market (~260 km)</option>
+                <option value="Bengaluru Yeshwanthpur">Bengaluru Yeshwanthpur Market (~130 km)</option>
+                <option value="Hyderabad Bowenpally">Hyderabad Bowenpally Market (~520 km)</option>
+                <option value="Vijayawada APMC">Vijayawada APMC Market (~380 km)</option>
+                <option value="Kochi Ernakulam">Kochi Ernakulam Market (~580 km)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Cargo Quantity (Quintals - 100 kg):</label>
+              <input type="number" id="freight-qty-input" value="30" class="form-input" min="1">
+            </div>
+
+            <div class="form-group">
+              <label>Transport Vehicle Type:</label>
+              <select id="freight-vehicle-select" class="form-input">
+                <option value="Bolero 1.5T">Bolero Pickup (1.5 Tonne Capacity)</option>
+                <option value="Eicher 14ft">Eicher 14ft Truck (4.5 Tonne Capacity)</option>
+                <option value="6-Wheeler Truck">6-Wheeler Heavy Truck (9 Tonne Capacity)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Wholesale Mandi Purchase Rate (₹/kg):</label>
+              <input type="number" id="freight-cost-kg-input" value="24" class="form-input" min="1">
+            </div>
+
+            <button id="calculate-freight-btn" class="whatsapp-send-btn">
+              <i data-lucide="calculator"></i>
+              <span>Calculate Final Landed Rate per Kg</span>
+            </button>
+          </div>
+
+          <div class="calc-results-card">
+            <div class="card-header-wa">
+              <i data-lucide="truck" class="wa-icon"></i>
+              <span>Landed Cost Breakdown Result</span>
+            </div>
+            <div id="freight-results-box" class="results-display-box">
+              Click Calculate to view transport cost breakdown.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: MARGIN & UPI BILL GENERATOR -->
+      <section id="tab-profit-bill" class="tab-content">
+        <div class="calculator-layout">
+          <div class="calc-config-card">
+            <h3>🧮 Retail Margin & UPI Bill Generator</h3>
+            <p>Calculate optimal retail price per kg to guarantee profit after spoilage/freight, and generate customer receipts with UPI QR Code.</p>
+
+            <div class="form-group">
+              <label>Commodity Name:</label>
+              <input type="text" id="bill-comm-input" value="Tomato (Madanapalle Grade A)" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Wholesale Purchase Cost (₹/kg):</label>
+              <input type="number" id="bill-purchase-input" value="24" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Estimated Wastage & Spoilage Allowance (%):</label>
+              <input type="number" id="bill-wastage-input" value="5" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Target Profit Margin (%):</label>
+              <input type="number" id="bill-margin-input" value="20" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Customer Name & Mobile:</label>
+              <input type="text" id="bill-customer-input" value="K. Venkatesh · 9876543210" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Quantity Sold (kg):</label>
+              <input type="number" id="bill-qty-input" value="15" class="form-input">
+            </div>
+
+            <div class="form-group">
+              <label>Trader UPI ID for Payments (PhonePe / GPay / Paytm):</label>
+              <input type="text" id="bill-upi-input" value="srilakshmitraders@upi" class="form-input">
+            </div>
+          </div>
+
+          <div class="calc-results-card">
+            <div class="card-header-wa">
+              <i data-lucide="receipt" class="wa-icon"></i>
+              <span>Generated Customer Digital Receipt & UPI QR</span>
+            </div>
+            <div id="bill-receipt-box" class="receipt-box">
+              Generating customer receipt...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: WEATHER & SUPPLY RISK ALERTS -->
+      <section id="tab-weather-alerts" class="tab-content">
+        <div class="section-banner">
+          <h2>🌤️ APMC Mandi Climate & Harvest Risk Alerts</h2>
+          <p>Real-time weather tracking and crop supply risk analysis for major Mandi belts across Southern India.</p>
+        </div>
+        <div class="trends-grid" id="weather-grid">
+          <!-- Injected by JS -->
+        </div>
+      </section>
+
+      <!-- TAB 6: WHATSAPP BROADCAST CARDS -->
       <section id="tab-whatsapp-cards" class="tab-content">
         <div class="whatsapp-layout">
           
@@ -166,7 +332,7 @@
         </div>
       </section>
 
-      <!-- TAB 4: VENDOR INVENTORY -->
+      <!-- TAB 7: VENDOR INVENTORY -->
       <section id="tab-vendor-stock" class="tab-content">
         <div class="inventory-layout">
           <div class="inventory-header">
@@ -225,13 +391,21 @@
         <i data-lucide="trending-up"></i>
         <span>Trends</span>
       </button>
+      <button class="mobile-tab" data-tab="freight-calc">
+        <i data-lucide="truck"></i>
+        <span>Freight</span>
+      </button>
+      <button class="mobile-tab" data-tab="profit-bill">
+        <i data-lucide="calculator"></i>
+        <span>Bill</span>
+      </button>
+      <button class="mobile-tab" data-tab="weather-alerts">
+        <i data-lucide="cloud-rain"></i>
+        <span>Weather</span>
+      </button>
       <button class="mobile-tab" data-tab="whatsapp-cards">
         <i data-lucide="message-square"></i>
         <span>WhatsApp</span>
-      </button>
-      <button class="mobile-tab" data-tab="vendor-stock">
-        <i data-lucide="boxes"></i>
-        <span>Stock</span>
       </button>
     </nav>
 

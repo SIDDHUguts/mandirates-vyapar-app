@@ -13,6 +13,7 @@
   --accent-green: #22C55E;
   --accent-red: #EF4444;
   --accent-amber: #F59E0B;
+  --accent-blue: #38BDF8;
   
   --text-main: #F8FAFC;
   --text-muted: #94A3B8;
@@ -133,6 +134,27 @@ body {
   gap: 12px;
 }
 
+/* Geolocation Tracking Button */
+.geo-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: var(--accent-blue);
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.geo-btn:hover {
+  background: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
+}
+
 .install-btn {
   display: flex;
   align-items: center;
@@ -187,9 +209,49 @@ body {
   100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
-/* ==========================================================================
-   TICKER BAR WITH GUARANTEED HOVER PAUSE
-   ========================================================================== */
+/* Location Status Banner */
+.location-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: var(--accent-blue);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Voice Search Mic Button */
+.voice-mic-btn {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: var(--primary-emerald);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.voice-mic-btn:hover {
+  background: var(--primary-emerald);
+  color: #0F172A;
+}
+
+.voice-mic-btn.listening {
+  background: var(--accent-red);
+  color: #FFFFFF;
+  border-color: var(--accent-red);
+  animation: pulse 1s infinite;
+}
+
+/* Ticker Bar */
 .ticker-wrapper {
   display: flex;
   align-items: center;
@@ -225,7 +287,6 @@ body {
   will-change: transform;
 }
 
-/* Strict CSS Pause on Hover */
 .ticker-wrapper:hover .ticker-content,
 .ticker-content:hover,
 .ticker-item:hover {
@@ -264,6 +325,7 @@ body {
   padding: 8px 24px;
   gap: 8px;
   border-bottom: 1px solid var(--border-color);
+  overflow-x: auto;
 }
 
 @media (min-width: 768px) {
@@ -279,11 +341,12 @@ body {
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-muted);
-  padding: 10px 18px;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
@@ -404,6 +467,45 @@ body {
   outline: none;
   cursor: pointer;
   min-height: 44px;
+}
+
+/* Calculator Grid Layouts */
+.calculator-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 900px) {
+  .calculator-layout { grid-template-columns: 1fr 1fr; }
+}
+
+.calc-config-card, .calc-results-card {
+  background: var(--bg-card);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+.calc-config-card h3 {
+  font-family: var(--font-heading);
+  margin-bottom: 6px;
+}
+
+.calc-config-card p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.results-display-box, .receipt-box {
+  background: #0B141A;
+  border: 1px solid #1F2C34;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  color: #E9EDEF;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 /* Rates Grid */
@@ -542,17 +644,6 @@ body {
   padding: 24px;
 }
 
-.whatsapp-config-card h3 {
-  font-family: var(--font-heading);
-  margin-bottom: 6px;
-}
-
-.whatsapp-config-card p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 20px;
-}
-
 .form-group {
   margin-bottom: 18px;
 }
@@ -658,6 +749,7 @@ body {
   border-top: 1px solid var(--border-color);
   z-index: 100;
   height: 60px;
+  overflow-x: auto;
 }
 
 @media (min-width: 768px) {
@@ -668,6 +760,7 @@ body {
 
 .mobile-tab {
   flex: 1;
+  min-width: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
